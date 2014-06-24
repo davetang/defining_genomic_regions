@@ -5,6 +5,7 @@ then
    git clone https://github.com/arq5x/bedtools2.git
    cd bedtools2
    make clean; make all
+   cd ..
 fi
 
 v=19
@@ -48,10 +49,12 @@ fi
 
 if [ ! -f transcript_utr_number.out.gz ]
 then
-   check_utr.pl gencode.v19.annotation.gtf.gz | gzip > transcript_utr_number.out.gz
+   perl check_utr.pl gencode.v19.annotation.gtf.gz | gzip > transcript_utr_number.out.gz
 fi
 
 if [ ! -f transcript_utr.bed.gz ]
 then
-   print_utr.pl gencode.v19.annotation.gtf.gz | gzip > transcript_utr.bed.gz
+   perl print_utr.pl gencode.v19.annotation.gtf.gz | gzip > transcript_utr.bed.gz
 fi
+
+echo Done
