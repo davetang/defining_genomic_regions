@@ -18,7 +18,7 @@ fi
 if [ ! -f gencode_v${v}_exon_merged.bed.gz ]
 then
    zcat gencode.v$v.annotation.gtf.gz |
-   awk 'BEGIN{OFS="\t";} $3=="exon" {print $1,$4,$5}' |
+   awk 'BEGIN{OFS="\t";} $3=="exon" {print $1,$4-1,$5}' |
    bedtools2/bin/sortBed |
    bedtools2/bin/mergeBed -i - | gzip > gencode_v${v}_exon_merged.bed.gz
 fi
@@ -26,7 +26,7 @@ fi
 if [ ! -f gencode_v${v}_intron.bed.gz ]
 then
    zcat gencode.v$v.annotation.gtf.gz |
-   awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4,$5}' |
+   awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4-1,$5}' |
    bedtools2/bin/sortBed |
    bedtools2/bin/subtractBed -a stdin -b gencode_v${v}_exon_merged.bed.gz |
    gzip > gencode_v${v}_intron.bed.gz
@@ -41,7 +41,7 @@ fi
 if [ ! -f gencode_v${v}_intergenic.bed.gz ]
 then 
    zcat gencode.v$v.annotation.gtf.gz |
-   awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4,$5}' |
+   awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4-1,$5}' |
    bedtools2/bin/sortBed |
    bedtools2/bin/complementBed -i stdin -g hg19.genome |
    gzip > gencode_v${v}_intergenic.bed.gz
