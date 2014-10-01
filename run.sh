@@ -73,4 +73,12 @@ then
    perl print_utr.pl gencode.v19.annotation.gtf.gz | gzip > transcript_utr.bed.gz
 fi
 
+echo Creating promoter region
+
+if [ ! -f promoter.bed.gz ]
+then
+   perl promoter.pl gencode.v19.annotation.gtf.gz 200 | gzip > promoter.bed.gz
+fi
+
+
 echo Done

@@ -2,3 +2,4 @@ bedtools2
 gencode*
 hg19.genome
 transcript*
+promoter.bed.gz
