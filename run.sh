@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo Checking for bedtools
+
 if [ ! -d bedtools2 ]
 then
    git clone https://github.com/arq5x/bedtools2.git
@@ -8,12 +10,16 @@ then
    cd ..
 fi
 
+echo Downloading GENCODE annotations
+
 v=19
 
 if [ ! -f gencode.v$v.annotation.gtf.gz ]
 then
    wget ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_$v/gencode.v$v.annotation.gtf.gz
 fi
+
+echo Creating exonic regions
 
 if [ ! -f gencode_v${v}_exon_merged.bed.gz ]
 then
@@ -22,6 +28,8 @@ then
    bedtools2/bin/sortBed |
    bedtools2/bin/mergeBed -i - | gzip > gencode_v${v}_exon_merged.bed.gz
 fi
+
+echo Creating intronic regions
 
 if [ ! -f gencode_v${v}_intron.bed.gz ]
 then
@@ -32,11 +40,15 @@ then
    gzip > gencode_v${v}_intron.bed.gz
 fi
 
+echo Downloading hg19 coordinates
+
 if [ ! -f hg19.genome ]
 then
    mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -e \
    "select chrom, size from hg19.chromInfo"  > hg19.genome
 fi
+
+echo Creating intergenic regions
 
 if [ ! -f gencode_v${v}_intergenic.bed.gz ]
 then 
@@ -47,10 +59,14 @@ then
    gzip > gencode_v${v}_intergenic.bed.gz
 fi
 
+echo Counting UTRs
+
 if [ ! -f transcript_utr_number.out.gz ]
 then
    perl check_utr.pl gencode.v19.annotation.gtf.gz | gzip > transcript_utr_number.out.gz
 fi
+
+echo Creating UTRs
 
 if [ ! -f transcript_utr.bed.gz ]
 then
