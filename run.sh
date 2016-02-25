@@ -40,13 +40,13 @@ then
    gzip > gencode_v${v}_intron.bed.gz
 fi
 
-echo Downloading hg19 coordinates
-
-if [ ! -f hg19.genome ]
-then
-   mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -e \
-   "select chrom, size from hg19.chromInfo"  > hg19.genome
-fi
+# echo Downloading hg19 coordinates
+# 
+# if [ ! -f hg19.genome ]
+# then
+#    mysql --user=genome --host=genome-mysql.cse.ucsc.edu -A -e \
+#    "select chrom, size from hg19.chromInfo"  > hg19.genome
+# fi
 
 echo Creating intergenic regions
 
@@ -54,7 +54,7 @@ if [ ! -f gencode_v${v}_intergenic.bed.gz ]
 then 
    zcat gencode.v$v.annotation.gtf.gz |
    awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4-1,$5}' |
-   bedtools2/bin/sortBed |
+   sort -k1V -k2,2n |
    bedtools2/bin/complementBed -i stdin -g hg19.genome |
    gzip > gencode_v${v}_intergenic.bed.gz
 fi
