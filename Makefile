@@ -1,5 +1,5 @@
 all:
-	run.sh
+	./run.sh
 
 clean:
 	rm -rf bedtools2 *.gz
