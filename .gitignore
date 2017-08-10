@@ -2,3 +2,5 @@ bedtools2
 gencode*
 transcript*
 promoter.bed.gz
+Arabidopsis_thaliana.TAIR10.36.gtf.gz
+my_*
