@@ -151,6 +151,29 @@ bedtools2/bin/bedtools intersect -a my_file.bed -b gencode_v19_intergenic.bed.gz
 bedtools2/bin/bedtools intersect -a my_file.bed -b gencode_v19_intron.bed.gz -u | wc -l
 ```
 
+## run.pl
+
+I wrote `run.pl` to create exonic, intronic, and intergenic BED files as well as providing some simple statistics of each region.
+
+```bash
+run.pl Arabidopsis_thaliana.TAIR10.37.gtf.gz araTha1.chrom.sizes 
+Creating exonic regions
+Creating intronic regions
+Creating intergenic regions
+
+Coverage summary per region (percentage)
+
+Exon: 39.99
+Intron: 15.16
+Intergenic: 44.84
+
+Average length per region (bp)
+
+Exon: 336.63
+Intron: 157.37
+Intergenic: 1951.60
+```
+
 ## Further reading
 
 See assoicated blog post: <https://davetang.org/muse/2013/01/18/defining-genomic-regions/>
