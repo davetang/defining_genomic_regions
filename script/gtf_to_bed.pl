@@ -33,7 +33,7 @@ while(<IN>){
    next unless $feature eq $my_feature;
 
    my $name = '.';
-   if ($attributes =~ /gene_id\s"([a-zA-Z0-9.]+)";/){
+   if ($attributes =~ /gene_id\s"([a-zA-Z0-9._]+)";/){
       $name = $1;
    }
 
