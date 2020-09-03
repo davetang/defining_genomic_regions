@@ -1,0 +1,54 @@
+---
+title: "Plot GENCODE stats"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(reshape2)
+theme_set(theme_bw())
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Plot.
+
+```{r load_and_plot, warning=FALSE, message=FALSE}
+stat_files <- list.files(path = ".", pattern = "stats$")
+file_list <- lapply(stat_files, function(x){
+  read_delim(file = x, delim = " ", col_names = c("var", "value"))
+})
+
+names(file_list) <- sub(pattern = "*.annotation.gtf.stats", replacement = "", x = stat_files)
+
+my_df <- as.data.frame(do.call(rbind, sapply(file_list, function(x){
+  x[, 2]
+})))
+
+colnames(my_df) <- sub(pattern = ":", replacement = "", x = file_list[[1]]$var)
+my_df$version <- sub(pattern = "gencode.v(\\d\\d).value", replacement = "\\1", x = row.names(my_df))
+row.names(my_df) <- NULL
+my_df <- melt(my_df, id.vars = "version")
+
+my_df %>%
+  filter(str_detect(variable, "coverage")) %>%
+  ggplot(., aes(version, value, fill = variable)) +
+  geom_col() +
+  labs(x = "GENCODE version", y = "Percentage", title = "Genomic region proportions") -> p1
+
+my_df %>%
+  filter(str_detect(variable, "length")) %>%
+  ggplot(., aes(version, value, fill = variable)) +
+  geom_col() +
+  labs(x = "GENCODE version", y = "Average length (bp)", title = "Genomic region lengths") -> p2
+
+p1
+p2
+```
+
+Save plots.
+
+```{r save_plot, warning=FALSE, message=FALSE}
+ggsave(filename = "genomic_region_proportion.png", plot = p1)
+ggsave(filename = "genomic_region_length.png", plot = p2)
+```
