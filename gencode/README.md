@@ -29,6 +29,7 @@ parallel --verbose "../run.pl {} ../chrom_info/hg38.genome > {.}.stats" ::: *.gt
 
 Plot using `plot_stats.Rmd`.
 
-![](genomic_region_proportion.png)
-![](genomic_region_length.png)
+<img src="https://github.com/davetang/defining_genomic_regions/blob/master/gencode/genomic_region_proportion.png" width="600" />
+<img src="https://github.com/davetang/defining_genomic_regions/blob/master/gencode/genomic_region_length.png" width="600" />
+<img src="https://github.com/davetang/defining_genomic_regions/blob/master/gencode/gene_type.png" width="600" />
 
