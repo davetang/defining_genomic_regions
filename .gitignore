@@ -4,3 +4,4 @@ transcript*
 *.gtf.gz
 gencode/*.gtf.gz
 my_*
+*.swp
