@@ -1,29 +1,32 @@
 Defining genomic regions
 ========================
 
-Define regions in a reference genome by simply using [BEDTools](http://bedtools.readthedocs.io/en/latest/) and a GTF file. The IGV screenshot is based on the *Arabidopsis thaliana* example below.
+A reference genome is simply a string of A's, C's, G's, and T's. However, there are many functional elements within the genome and massive efforts have been undertaken to annotate genomes. The [GENCODE Project](https://www.gencodegenes.org/pages/gencode.html) was tasked with cataloguing genes and gene variants in the human and mouse genomes. [TAIR](https://www.arabidopsis.org/portals/genAnnotation/gene_structural_annotation/annotation_data.jsp) coordinates and provides genome annotations for *Arabidopsis thaliana*. Typically, genome annotations are provided in a [GTF file](https://en.wikipedia.org/wiki/Gene_transfer_format).
+
+We will define regions in a reference genome by using [BEDTools](http://bedtools.readthedocs.io/en/latest/) and a GTF file.
 
 ![Example](example.png)
-
-To clone this repository:
-
-```bash
-git clone https://github.com/davetang/defining_genomic_regions.git
-```
+The IGV screenshot above shows various gene models in dark blue, exonic regions in light red, intronic regions in light green, and intergenic regions in light blue.
 
 ## Install BEDTools
 
-To get started, install BEDTools, if you haven't already.
+To get started, download and compile BEDTools, if you haven't already.
 
 ```bash
 git clone https://github.com/arq5x/bedtools2.git
 cd bedtools2
-make clean; make all
+make clean && make all
+```
+
+Alternatively, you can install BEDTools using [Conda](https://davetang.github.io/reproducible_bioinformatics/conda.html).
+
+```bash
+conda install -c bioconda bedtools
 ```
 
 ## Download GTF file
 
-Next you will require a [GTF](https://genome.ucsc.edu/FAQ/FAQformat#format4) file. I'll use a GTF file for *Arabidopsis thaliana*.
+We will use the GTF file for *Arabidopsis thaliana*; more information on the format is provided at the [UCSC Genome Browser help page](https://genome.ucsc.edu/FAQ/FAQformat#format4).
 
 ```bash
 wget -c ftp://ftp.ensemblgenomes.org/pub/release-36/plants/gtf/arabidopsis_thaliana/Arabidopsis_thaliana.TAIR10.36.gtf.gz
@@ -69,15 +72,11 @@ gzip > my_intron.bed.gz
 For the intergenic region, we will require the size of the chromosomes.
 
 ```bash
-wget http://genome-test.cse.ucsc.edu/~hiram/hubs/Plants/araTha1/araTha1.chrom.sizes
-cat araTha1.chrom.sizes | sed 's/^chr//' | sed 's/Cp/Pt/' > tmp
-mv tmp araTha1.chrom.sizes
-
 gunzip -c Arabidopsis_thaliana.TAIR10.36.gtf.gz |
-awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4-1,$5}' |
-bedtools sort -g araTha1.chrom.sizes |
-bedtools complement -i stdin -g araTha1.chrom.sizes |
-gzip > my_intergenic.bed.gz
+  awk 'BEGIN{OFS="\t";} $3=="gene" {print $1,$4-1,$5}' |
+  bedtools sort -g chrom_info/araTha1.genome |
+  bedtools complement -i stdin -g chrom_info/araTha1.genome |
+  gzip > my_intergenic.bed.gz
 ```
 
 ## *Arabidopsis thaliana* regions
@@ -87,7 +86,7 @@ How much of the is made up of exonic, intronic, and intergenic regions?
 ```bash
 alias add='perl -nle '\''$i+=$_; END {print $i}'\'''
 
-cat araTha1.chrom.sizes 
+cat chrom_info/araTha1.genome
 1       30427671
 5       26975502
 3       23459830
@@ -96,7 +95,7 @@ cat araTha1.chrom.sizes
 Mt      366924
 Pt      154478
 
-cat araTha1.chrom.sizes | cut -f2 | add
+cat chrom_info/araTha1.chrom.sizes | cut -f2 | add
 119667750
 
 # exonic
@@ -156,7 +155,7 @@ bedtools2/bin/bedtools intersect -a my_file.bed -b gencode_v19_intron.bed.gz -u 
 I wrote `run.pl` to create exonic, intronic, and intergenic BED files as well as providing some simple statistics of each region.
 
 ```bash
-run.pl Arabidopsis_thaliana.TAIR10.37.gtf.gz araTha1.chrom.sizes 
+run.pl Arabidopsis_thaliana.TAIR10.37.gtf.gz chrom_info/araTha1.genome
 Creating exonic regions
 Creating intronic regions
 Creating intergenic regions

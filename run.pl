@@ -53,15 +53,8 @@ if (!-e $intron_file){
 
 if (!-e $intergenic_file){
    warn "Creating intergenic regions\n";
-
-   my $tmp = basename($genome);
-   $tmp .= ".tmp";
-   my $sort = "sort -k1,1 -k2,2n $genome > $tmp";
-   system($sort);
-
-   my $command = "gunzip -c $infile | awk 'BEGIN{OFS=\"\\t\";} \$3==\"gene\" {print \$1,\$4-1,\$5}' | sort -k1,1 -k2,2n | bedtools complement -i stdin -g $tmp | gzip > $intergenic_file";
+   my $command = "gunzip -c $infile | awk 'BEGIN{OFS=\"\\t\";} \$3==\"gene\" {print \$1,\$4-1,\$5}' | bedtools sort -g $genome | bedtools complement -i stdin -g $genome | gzip > $intergenic_file";
    system($command);
-   unlink($tmp);
 } else {
    warn "$intergenic_file already exists; skipping intergenic step\n";
 }
@@ -73,16 +66,12 @@ if (-e $exon_file && -e $intron_file && -e $intergenic_file){
 
    my $total = $exon_coverage + $intergenic_coverage + $intron_coverage;
 
-   print "\nCoverage summary per region (percentage)\n\n";
-   printf "Exon: %.2f\n", $exon_coverage*100/$total;
-   printf "Intron: %.2f\n", $intron_coverage*100/$total;
-   printf "Intergenic: %.2f\n", $intergenic_coverage*100/$total;
-
-   print "\nAverage length per region (bp)\n\n";
-   print "Exon: $exon_average\n";
-   print "Intron: $intron_average\n";
-   print "Intergenic: $intergenic_average\n";
-   print "\n";
+   printf "exon_coverage: %.2f\n", $exon_coverage*100/$total;
+   printf "intron_coverage: %.2f\n", $intron_coverage*100/$total;
+   printf "intergenic_coverage: %.2f\n", $intergenic_coverage*100/$total;
+   print "exon_length: $exon_average\n";
+   print "intron_length: $intron_average\n";
+   print "intergenic_length: $intergenic_average\n";
 }
 
 sub stats {

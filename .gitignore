@@ -1,6 +1,6 @@
 bedtools2
-gencode*
 transcript*
 *.bed.gz
 *.gtf.gz
+gencode/*.gtf.gz
 my_*
