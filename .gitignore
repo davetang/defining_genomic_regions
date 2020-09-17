@@ -5,3 +5,4 @@ transcript*
 gencode/*.gtf.gz
 my_*
 *.swp
+.DS_Store

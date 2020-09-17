@@ -70,7 +70,7 @@ gtf_obj <- lapply(gtf_files, import)
 names(gtf_obj) <- sub(pattern = "*.annotation.gtf.gz", replacement = "", x = gtf_files)
 ```
 
-Plot.
+Plot `gene_type`.
 
 ```{r plot_gene_type, message=FALSE, warning=FALSE, fig.width=12, fig.height=8}
 plot_gene_type <- function(gr, plot_title){
@@ -98,4 +98,42 @@ p4 <- plot_gene_type(gtf_obj$gencode.v35, "GENCODE version 35")
 all_plot <- plot_grid(plotlist = list(p1, p2, p3, p4))
 all_plot
 ggsave(filename = "gene_type.png", plot = all_plot)
+```
+
+Plot `transcript_support_level`, which are [transcript scores](https://www.gencodegenes.org/pages/data_format.html) according to how well mRNA and EST alignments match over its full length:
+
+* 1 (all splice junctions of the transcript are supported by at least one non-suspect mRNA),
+* 2 (the best supporting mRNA is flagged as suspect or the support is from multiple ESTs),
+* 3 (the only support is from a single EST),
+* 4 (the best supporting EST is flagged as suspect),
+* 5 (no single transcript supports the model structure),
+* NA (the transcript was not analyzed)
+
+```{r plot_transcript_support, message=FALSE, warning=FALSE, fig.width=8, fig.height=6}
+plot_transcript_support <- function(gr, plot_title){
+  gr %>%
+    as.data.frame() %>%
+    filter(type == "transcript") %>%
+    group_by(transcript_support_level) %>%
+    summarise(count = n()) %>%
+    arrange(desc(count)) %>%
+    filter(!is.na(transcript_support_level)) %>%
+    mutate(transcript_support_level = factor(x = transcript_support_level, levels = c(1:5, "NA"))) %>%
+    ggplot(., aes(transcript_support_level, y = count)) +
+      geom_col() +
+      #scale_y_log10() +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+            axis.title.x = element_blank()) +
+      scale_y_continuous(labels = comma) +
+      labs(title = plot_title)
+}
+
+p1 <- plot_transcript_support(gtf_obj$gencode.v21, "GENCODE version 21")
+p2 <- plot_transcript_support(gtf_obj$gencode.v30, "GENCODE version 30")
+p3 <- plot_transcript_support(gtf_obj$gencode.v33, "GENCODE version 33")
+p4 <- plot_transcript_support(gtf_obj$gencode.v35, "GENCODE version 35")
+
+all_plot <- plot_grid(plotlist = list(p1, p2, p3, p4))
+all_plot
+ggsave(filename = "transcript_support_level.png", plot = all_plot)
 ```
