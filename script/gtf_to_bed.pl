@@ -69,7 +69,7 @@ close(IN);
 
 sub usage {
 print STDERR <<EOF;
-Usage: $0 -f FILE -l STRING
+Usage: $0 -i FILE -f STRING -u INT -d INT
 
 Where:   -i         GTF file
          -f         Feature to keep, e.g. gene, transcript, CDS, exon
