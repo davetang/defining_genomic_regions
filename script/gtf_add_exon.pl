@@ -1,9 +1,15 @@
 #!/usr/bin/env perl
 #
-# Some GTF files do not contain exon features. This script add exon features based on the CDS feature.
-# This script requires the gene_id attribute and will set the transcript_id to the gene_id.
-# Thus only use this script for GTF files where there is only one transcript per gene.
-# If you have more than one transcript per gene, remove or comment out line 47.
+# Some GTF files do not contain exon features and thus do not work well with some tools. This script add exon features based on the CDS feature.
+#
+# Furthermore, some GTF files set all transcript_id's to "unknown_transcript_1", which can also create problems.
+#
+# This script can replace transcript_id's with the gene_id. However, this creates a problem when there are more than one transcript per gene.
+# Thus only use the -t option when there is only one transcript model per gene.
+#
+# Lastly, the CDS, start_codon, and stop_codon lines will not be outputted by default. Use the -c option to output them.
+#
+# For your information, below are the definitions of CDS and exon:
 #
 # A CDS is a contiguous sequence which begins with, and includes, the start codon but does not include the stop codon.
 # An exon is a region of the transcript sequence within a gene which is not removed from the primary RNA transcript by RNA splicing.
@@ -14,7 +20,7 @@ use strict;
 use Getopt::Std;
 
 my %opts = ();
-getopts('i:f:h:u:d:', \%opts);
+getopts('i:h:c:t:', \%opts);
 
 if ($opts{'h'} ||
     !exists $opts{'i'}
@@ -23,6 +29,15 @@ if ($opts{'h'} ||
 }
 
 my $gtf = $opts{'i'};
+my $keep_cds = 0;
+my $replace_tid = 0;
+
+if (exists $opts{'c'}){
+   $keep_cds = 1;
+}
+if (exists $opts{'t'}){
+   $replace_tid = 1;
+}
 
 if ($gtf =~ /\.gz$/){
    open(IN, '-|', "gunzip -c $gtf") || die "Could not open $gtf: $!\n";
@@ -30,23 +45,41 @@ if ($gtf =~ /\.gz$/){
    open(IN, '<', $gtf) || die "Could not open $gtf: $!\n";
 }
 
-while(<IN>){
+LINE: while(<IN>){
    chomp;
    next if /^#/;
    my ($sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes) = split(/\t/);
 
-   if ($feature eq 'CDS'){
-      my $gene_id = '';
-      if ($attributes =~ /gene_id\s"([a-zA-Z0-9._]+)";/){
-         $gene_id = $1;
-      } else {
-         die "Could not extract gene_id on line $.: $_\n";
-      }
-      print "$_\n";
-      $attributes = "gene_id \"$gene_id\"; transcript_id \"$gene_id\";";
-      print join("\t", $sequence, $source, 'exon', $start, $end + 3, $score, $strand, $phase, $attributes), "\n";
+   my $gene_id = '';
+   if ($attributes =~ /gene_id\s"([a-zA-Z0-9._]+)";/){
+      $gene_id = $1;
    } else {
-      print "$_\n";
+      die "Could not extract gene_id on line $.: $_\n";
+   }
+   if ($gene_id eq ''){
+      warn("[WARNING]: $feature on line $. is not associated with any gene_id: skipping\n");
+      next LINE;
+   }
+
+   if ($replace_tid){
+      $attributes =~ s/transcript_id "[a-zA-Z0-9._]+"/transcript_id "$gene_id"/;
+   }
+
+   if ($feature eq 'CDS'){
+      if ($keep_cds){
+         print "$_\n";
+      }
+      print join("\t", $sequence, $source, 'exon', $start, $end + 3, $score, $strand, $phase, $attributes), "\n";
+   } elsif ($feature eq 'start_codon') {
+      if ($keep_cds){
+         print join("\t", $sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes), "\n";
+      }
+   } elsif ($feature eq 'stop_codon') {
+      if ($keep_cds){
+         print join("\t", $sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes), "\n";
+      }
+   } else {
+      print join("\t", $sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes), "\n";
    }
 
 }
@@ -57,6 +90,8 @@ print STDERR <<EOF;
 Usage: $0 -i FILE
 
 Where:   -i         GTF file
+         -c         output CDS, start_codon, and stop_codon (default: FALSE)
+         -t         replace transcript ID with gene ID (default: FALSE)
          -h         this helpful usage message
 
 EOF
