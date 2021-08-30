@@ -39,6 +39,10 @@ if (exists $opts{'t'}){
    $replace_tid = 1;
 }
 
+# store coordinates to check for overlaps
+my %cds = ();
+my %exon = ();
+
 if ($gtf =~ /\.gz$/){
    open(IN, '-|', "gunzip -c $gtf") || die "Could not open $gtf: $!\n";
 } else {
@@ -51,18 +55,19 @@ LINE: while(<IN>){
    my ($sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes) = split(/\t/);
 
    my $gene_id = '';
-   if ($attributes =~ /gene_id\s"([a-zA-Z0-9._]+)";/){
+   if ($attributes =~ /gene_id\s"([\/a-zA-Z0-9._-]*)";/){
       $gene_id = $1;
    } else {
-      die "Could not extract gene_id on line $.: $_\n";
+      die "[ERROR] Could not extract gene_id on line $.: $_\n";
    }
    if ($gene_id eq ''){
-      warn("[WARNING]: $feature on line $. is not associated with any gene_id: skipping\n");
+      warn("[WARNING] $feature on line $. is not associated with any gene_id: skipping\n");
+      warn("[WARNING] $_\n");
       next LINE;
    }
 
    if ($replace_tid){
-      $attributes =~ s/transcript_id "[a-zA-Z0-9._]+"/transcript_id "$gene_id"/;
+      $attributes =~ s/transcript_id "[\/a-zA-Z0-9._-]+"/transcript_id "$gene_id"/;
    }
 
    if ($feature eq 'CDS'){
@@ -70,6 +75,7 @@ LINE: while(<IN>){
          print "$_\n";
       }
       print join("\t", $sequence, $source, 'exon', $start, $end + 3, $score, $strand, $phase, $attributes), "\n";
+      $cds{$start} = $end + 3;
    } elsif ($feature eq 'start_codon') {
       if ($keep_cds){
          print join("\t", $sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes), "\n";
@@ -78,12 +84,24 @@ LINE: while(<IN>){
       if ($keep_cds){
          print join("\t", $sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes), "\n";
       }
+   } elsif ($feature eq 'exon') {
+      $exon{$start} = $end;
    } else {
       print join("\t", $sequence, $source, $feature, $start, $end, $score, $strand, $phase, $attributes), "\n";
    }
 
 }
 close(IN);
+
+# Issue warning if the newly created exon has coordinates identical to an existing exon
+foreach my $start (keys %cds){
+   my $end = $cds{$start};
+   if (exists $exon{$start} && $exon{$start} == $end){
+      warn("[WARNING] Exon $start-$end is repeated; please confirm that they below to different transcript_id's.\n");
+   }
+}
+
+warn("[WARNING] Finished processing $gtf.\n");
 
 sub usage {
 print STDERR <<EOF;
